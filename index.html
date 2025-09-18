@@ -13960,6 +13960,42 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.documentElement.classList.remove('dark');
                 }
                 
+                // Update material style (glass tint) for the new theme
+                // Use self-contained logic since applyMaterialStyle might not be in scope
+                const uiStyleSelect = document.getElementById('uiStyleSelect');
+                const selectedStyle = (uiStyleSelect && uiStyleSelect.value) || 'twilight';
+                
+                // Material presets - mirror the values from the main scope
+                const materialPresets = {
+                    glass: {
+                        styles: {
+                            'default': { light: '255,255,255', dark: '15,20,24' },
+                            'twilight': { light: '235, 230, 255', dark: '30, 25, 45' },
+                            'graphite': { light: '240,240,245', dark: '35,35,40' },
+                            'emerald': { light: '240,255,245', dark: '20,40,30' },
+                            'blue': { light: '235,245,255', dark: '20,30,45' }
+                        }
+                    }
+                };
+                
+                if (materialPresets.glass.styles[selectedStyle]) {
+                    const tint = materialPresets.glass.styles[selectedStyle][isDark ? 'dark' : 'light'];
+                    document.documentElement.style.setProperty('--glass-tint', tint);
+                }
+                
+                // Update glass shadow for the new theme  
+                if (typeof applyGlassShadow === 'function') {
+                    applyGlassShadow();
+                } else {
+                    // Self-contained glass shadow update
+                    const glassShadowSlider = document.getElementById('glassShadowSlider');
+                    const value = glassShadowSlider ? glassShadowSlider.value : 50; // default value
+                    const blur = isDark ? 20 + (value / 100) * 60 : 10 + (value / 100) * 40;
+                    const alpha = isDark ? 0.2 + (value / 100) * 0.4 : 0.08 + (value / 100) * 0.2;
+                    document.documentElement.style.setProperty('--glass-shadow-blur', `${blur}px`);
+                    document.documentElement.style.setProperty('--glass-shadow-alpha', alpha.toFixed(3));
+                }
+                
                 // Update main dark mode toggle
                 const darkToggle = document.getElementById('darkToggle');
                 if (darkToggle) {
