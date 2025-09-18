@@ -3641,7 +3641,7 @@ html.menu-open {
     <header class="title-wrap glass">
       <h1><svg fill="currentColor" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 415.259 415.259" xml:space="preserve"><g><g><g id="Layer_5_47_"><g><path d="M327.073,323.196L174.091,90.426c-3.1-4.718-7.795-7.423-12.877-7.423c-5.209,0-9.955,2.811-13.023,7.712L2.671,323.26 c-3.166,5.062-3.535,10.572-1.013,15.127c2.522,4.556,7.392,7.166,13.36,7.166h299.995c6.015,0,10.881-2.633,13.358-7.225 C330.848,333.736,330.375,328.223,327.073,323.196z M161.304,101.234c1.529,0,2.417,1.472,2.417,1.472l92.72,138.025 c5.974,10.752,1.974,14.086-9.36,3.086c0,0-33.562-38.944-46.108-50.578c-3.15-2.921-9.553-3.67-13.12-1.275 c-9.288,6.233-25.457,21.991-34.852,28.063c-3.607,2.332-8.505,0.328-9.525-3.847c-3.373-13.792-6.196-42.208-9.754-55.955 c-1.076-4.159-5.102-4.926-8.567-2.387c-0.858,0.629-2.687,1.727-3.603,2.268c-1.06,0.625-0.469-0.259-0.469-0.259 l37.937-57.292C159.018,102.558,159.708,101.234,161.304,101.234z"/><path d="M412.619,290.749L271.834,76.537c-2.854-4.341-7.173-6.831-11.852-6.831c-4.793,0-9.161,2.587-11.983,7.098 l-29.411,46.999c0,0-1.099,1.681-0.247,3.573c0.951,2.113,3.63,5.949,5.093,7.748c1.142,1.401,2.588-0.974,2.588-0.974 l32.199-48.845c0,0,0.873-1.301,1.847-1.301c1.109,0,1.947,1.386,1.947,1.386l91.624,135.562 c2.603,3.782-4.281,3.799-10.285-1.016c-9.071-7.274-27.021-22.074-36.116-29.319c-3.094-2.464-8.74-3.301-12.073-1.174 c-4.911,3.135-16.602,12.289-21.366,16.683c-2.557,2.357-0.692,4.572-0.692,4.572l64.075,97.496c0,0,1.812,3.129,4.688,3.129 c14.914,0,59.656,0,59.656,0c5.532,0,10.015-2.424,12.293-6.648C416.095,300.45,415.658,295.374,412.619,290.749z"/></g></g></g></g></svg>Sum-it Forecast</h1>
       <div class="header-controls">
-        <button id="darkToggle" class="ctrl-btn dark-toggle" title="Toggle Dark Mode">🌙</button>
+        <button id="darkToggle" class="ctrl-btn dark-toggle" title="Theme: Auto - Click to cycle">🌙</button>
         <button id="calendarToggleBtn" class="ctrl-btn" title="Toggle Calendar View"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19,19H5V8H19M19,3H18V1H16V3H8V1H6V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M16.53,11.06L15.47,10L10.5,14.97L8.47,12.94L7.41,14L10.5,17.09L16.53,11.06Z"/></svg></button>
         <button id="menuBtn" class="ctrl-btn menu-btn" title="Open Settings"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" /></svg></button>
       </div>
@@ -5576,7 +5576,26 @@ html.menu-open {
             });
 
             const settings = loadProfileData('settings', {});
-            if (settings.darkMode) { document.documentElement.classList.add('dark'); darkToggle.innerHTML = '☀️'; } else { darkToggle.innerHTML = '🌙'; }
+            
+            // Check if we have a modern theme setting, otherwise use legacy darkMode setting
+            const savedTheme = localStorage.getItem('sum-it-forecast.theme');
+            if (!savedTheme) {
+                // Migrate from legacy darkMode setting to new theme system
+                const legacyTheme = settings.darkMode ? 'dark' : 'light';
+                localStorage.setItem('sum-it-forecast.theme', legacyTheme);
+                console.log('Migrated legacy theme setting to:', legacyTheme);
+            }
+            
+            // Apply the theme (this will be done properly when DOM is ready, but set initial state)
+            const currentTheme = localStorage.getItem('sum-it-forecast.theme') || 'auto';
+            if (currentTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+                darkToggle.innerHTML = '☀️';
+            } else if (currentTheme === 'light') {
+                document.documentElement.classList.remove('dark');
+                darkToggle.innerHTML = '🌙';
+            }
+            // Auto mode will be handled by the theme system when DOM is ready
             dontAutoDeductToggle.classList.toggle('active', settings.dontAutoDeduct || false);
             userFinances = settings.finances || {};
             currentBalance.value = userFinances.balance || ''; paycheckAmount.value = userFinances.paycheck || ''; nextPayday.value = userFinances.payday || ''; payFrequency.value = userFinances.frequency || 'Bi-Weekly';
@@ -7802,12 +7821,39 @@ html.menu-open {
 
     const handleListDoubleClick = (e) => { const tr = e.target.closest('tr[data-id]'); if (tr && !e.target.closest('.actions-cell, .mobile-bill-actions')) openEditModal(Number(tr.dataset.id)); };
     const handleToggleDarkMode = () => { 
-        document.documentElement.classList.toggle('dark'); 
-        const isDark = document.documentElement.classList.contains('dark'); 
-        darkToggle.innerHTML = isDark ? '☀️' : '🌙'; 
+        // Get current theme setting
+        const currentTheme = localStorage.getItem('sum-it-forecast.theme') || 'auto';
+        
+        // Cycle through: light -> dark -> auto -> light...
+        let nextTheme;
+        if (currentTheme === 'light') {
+            nextTheme = 'dark';
+        } else if (currentTheme === 'dark') {
+            nextTheme = 'auto';
+        } else { // auto or any other value
+            nextTheme = 'light';
+        }
+        
+        // Apply the new theme using the existing theme system
+        applyTheme(nextTheme);
+        
+        // Update theme preview cards to reflect the change
+        updateThemeUI(nextTheme);
+        
+        // Save theme preference
+        localStorage.setItem('sum-it-forecast.theme', nextTheme);
+        
+        // Reinitialize theme change listener for auto mode
+        setupThemeChangeListener();
+        
+        // Apply material style and glass shadow
         applyMaterialStyle(); 
         applyGlassShadow(); 
+        
+        // Save data using the legacy system for backward compatibility
         saveData(); 
+        
+        console.log('Theme toggled to:', nextTheme);
     };
     
 
@@ -13809,6 +13855,100 @@ html.menu-open {
     requestAnimationFrame(mainLoop);
 })();
 
+// ========== Global Theme Functions ==========
+// These functions need to be globally available for the bottom navigation toggle
+
+// Set up real-time theme change listener
+let themeChangeListener = null;
+
+function setupThemeChangeListener() {
+    // Remove existing listener if any
+    if (themeChangeListener) {
+        themeChangeListener.remove();
+    }
+    
+    // Set up new listener
+    themeChangeListener = window.ThemeDetection.onThemeChanged(function(isDark) {
+        const currentTheme = localStorage.getItem('sum-it-forecast.theme');
+        if (currentTheme === 'auto') {
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            
+            // Update main dark mode toggle
+            const darkToggle = document.getElementById('darkToggle');
+            if (darkToggle) {
+                darkToggle.innerHTML = isDark ? '☀️' : '🌙';
+            }
+            
+            console.log('System theme changed, auto mode updated:', isDark ? 'dark' : 'light');
+        }
+    });
+}
+
+function applyTheme(theme) {
+    if (theme === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+    } else if (theme === 'auto') {
+        // Auto theme - use Cordova system preference
+        window.ThemeDetection.isDarkMode(
+            function(isDark) {
+                if (isDark) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            },
+            function(error) {
+                console.warn('Failed to detect system theme, defaulting to light:', error);
+                document.documentElement.classList.remove('dark');
+            }
+        );
+    }
+}
+
+function updateThemeUI(theme) {
+    // Update theme preview cards
+    const themePreviewCards = document.querySelectorAll('.theme-preview-card');
+    themePreviewCards.forEach(c => c.classList.remove('selected'));
+    const selectedCard = document.querySelector(`.theme-preview-card[data-theme="${theme}"]`);
+    if (selectedCard) {
+        selectedCard.classList.add('selected');
+    }
+    
+    // Update theme select dropdown
+    const themeSelect = document.getElementById('themeSelect');
+    if (themeSelect) {
+        themeSelect.value = theme;
+    }
+    
+    // Update main dark mode toggle to show appropriate icon for current state
+    const darkToggle = document.getElementById('darkToggle');
+    if (darkToggle) {
+        if (theme === 'auto') {
+            // For auto mode, check current system preference
+            window.ThemeDetection.isDarkMode(
+                function(isDark) {
+                    darkToggle.innerHTML = isDark ? '☀️' : '🌙';
+                    darkToggle.title = 'Theme: Auto (' + (isDark ? 'Dark' : 'Light') + ') - Click to cycle';
+                },
+                function(error) {
+                    darkToggle.innerHTML = '🌙';
+                    darkToggle.title = 'Theme: Auto (Light) - Click to cycle';
+                }
+            );
+        } else {
+            const isDark = document.documentElement.classList.contains('dark');
+            darkToggle.innerHTML = isDark ? '☀️' : '🌙';
+            darkToggle.title = 'Theme: ' + (theme.charAt(0).toUpperCase() + theme.slice(1)) + ' - Click to cycle';
+        }
+    }
+}
+
 // ========== Theme Detection with Android Dark Mode Support ==========
 // The cordova-plugin-android-dark-mode-support enables proper WebView dark mode support
 // This makes window.matchMedia('(prefers-color-scheme: dark)') work correctly
@@ -13865,53 +14005,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add event listeners to theme preview cards
     const themePreviewCards = document.querySelectorAll('.theme-preview-card');
     
-    // Function to apply theme
-    function applyTheme(theme) {
-        if (theme === 'light') {
-            document.documentElement.classList.remove('dark');
-        } else if (theme === 'dark') {
-            document.documentElement.classList.add('dark');
-        } else if (theme === 'auto') {
-            // Auto theme - use Cordova system preference
-            window.ThemeDetection.isDarkMode(
-                function(isDark) {
-                    if (isDark) {
-                        document.documentElement.classList.add('dark');
-                    } else {
-                        document.documentElement.classList.remove('dark');
-                    }
-                },
-                function(error) {
-                    console.warn('Failed to detect system theme, defaulting to light:', error);
-                    document.documentElement.classList.remove('dark');
-                }
-            );
-        }
-    }
-    
-    // Function to update UI elements
-    function updateThemeUI(theme) {
-        // Update theme preview cards
-        themePreviewCards.forEach(c => c.classList.remove('selected'));
-        const selectedCard = document.querySelector(`.theme-preview-card[data-theme="${theme}"]`);
-        if (selectedCard) {
-            selectedCard.classList.add('selected');
-        }
-        
-        // Update theme select dropdown
-        const themeSelect = document.getElementById('themeSelect');
-        if (themeSelect) {
-            themeSelect.value = theme;
-        }
-        
-        // Update main dark mode toggle
-        const darkToggle = document.getElementById('darkToggle');
-        if (darkToggle) {
-            const isDark = document.documentElement.classList.contains('dark');
-            darkToggle.innerHTML = isDark ? '☀️' : '🌙';
-        }
-    }
-    
     themePreviewCards.forEach(card => {
         card.addEventListener('click', function() {
             const selectedTheme = this.getAttribute('data-theme');
@@ -13940,36 +14033,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update UI
     updateThemeUI(savedTheme);
-    
-    // Set up real-time theme change listener
-    let themeChangeListener = null;
-    
-    function setupThemeChangeListener() {
-        // Remove existing listener if any
-        if (themeChangeListener) {
-            themeChangeListener.remove();
-        }
-        
-        // Set up new listener
-        themeChangeListener = window.ThemeDetection.onThemeChanged(function(isDark) {
-            const currentTheme = localStorage.getItem('sum-it-forecast.theme');
-            if (currentTheme === 'auto') {
-                if (isDark) {
-                    document.documentElement.classList.add('dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                }
-                
-                // Update main dark mode toggle
-                const darkToggle = document.getElementById('darkToggle');
-                if (darkToggle) {
-                    darkToggle.innerHTML = isDark ? '☀️' : '🌙';
-                }
-                
-                console.log('System theme changed, auto mode updated:', isDark ? 'dark' : 'light');
-            }
-        });
-    }
     
     // Initialize the listener
     setupThemeChangeListener();
